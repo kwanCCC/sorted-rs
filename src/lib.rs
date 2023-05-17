@@ -4,6 +4,13 @@ pub use simd::Trend;
 
 mod simd;
 
+///
+/// example:
+///     let nums = vec![1, 2, 3, 4, 5, ....];
+///     is_sorted(&nums, Trend::Ascending);
+///     let nums = vec![9, 8, 7, 6, 5, ....];
+///     is_sorted(&nums, Trend:Descending);
+///
 /// is_sorted check `AsRef<[i32]>` is sorted or not but it doesn't check the length of input.
 /// It's better to avoid call the function when the length of input is 1 or 0;
 pub fn is_sorted<T: AsRef<[i32]>>(a: T, t: Trend) -> bool {
