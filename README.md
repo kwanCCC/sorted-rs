@@ -1,6 +1,29 @@
-### Another algorithm base on SIMD which used to check `AsRef<[i32]>` is sorted or not
+### Another algorithm base on SIMD which use to check `AsRef<[i32]>` is sorted or not
 
 It both support `SSE2` and `AVX2` and much faster than regular implementations.
+
+### generic
+
+```
+ [ a, b, c, d .... x, y, z]
+ compare a and b,
+ compare b and c,
+ compare c and d
+```
+
+### SIMD
+
+```
+ [ a, b, c, d .... x, y, z]
+ load [a, b, c, d] into chunk0,
+ load [b, c, d, d] into chunk1,
+ compare chunk0 and chunk1,
+ load [d, e, f, g] into chunk0,
+ load [e, f, g, g] into chunk1,
+ compare chunk0 and chunk1 again
+```
+
+### Benchmark on AMD
 
 ```log
 
