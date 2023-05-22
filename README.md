@@ -1,4 +1,4 @@
-### Another algorithm base on SIMD which use to check `AsRef<[i32]>` is sorted or not
+## Another algorithm base on SIMD which use to check slice is sorted or not
 
 It both support `SSE2` and `AVX2` and much faster than regular implementations.
 

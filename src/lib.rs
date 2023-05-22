@@ -2,6 +2,8 @@
 
 pub use simd::Trend;
 
+use crate::simd::SinglePrecision;
+
 mod simd;
 
 ///
@@ -11,33 +13,34 @@ mod simd;
 ///     let nums = vec![9, 8, 7, 6, 5, ....];
 ///     is_sorted(&nums, Trend:Descending);
 ///
-/// is_sorted check `AsRef<[i32]>` is sorted or not but it doesn't check the length of input.
+/// is_sorted check sequence is sorted or not but it doesn't check the length of input.
 /// It's better to avoid call the function when the length of input is 1 or 0;
-pub fn is_sorted<T: AsRef<[i32]>>(a: T, t: Trend) -> bool {
+
+pub fn is_sorted<T: num::Integer + SinglePrecision>(a: &[T], t: Trend) -> bool {
     let a = a.as_ref();
     let n = a.len();
     #[cfg(feature = "use-sse")]
     {
         if n <= WORD || (n > WORD && n < SSE_WORD) {
-            return simd::is_sort(a, t);
+            return simd::is_sorted(a, t);
         }
     }
     #[cfg(feature = "use-avx2")]
     {
         if n <= WORD || (n > WORD && n < AVX2_WORD) {
-            return simd::is_sort(&a, t);
+            return simd::is_sorted(&a, t);
         }
     }
     #[cfg(feature = "use-sse")]
     {
         if n >= SSE_WORD {
-            return simd::is_sort_unroll4(&a, t);
+            return simd::is_sorted_unroll4(&a, t);
         }
     }
     #[cfg(feature = "use-avx2")]
     {
         if n >= AVX2_WORD {
-            return simd::is_sort_unroll4(&a, t);
+            return simd::is_sorted_unroll4(&a, t);
         }
     }
     false
@@ -70,8 +73,26 @@ mod tests {
                 reversed.extend(cur_data.iter().rev());
             }
 
-            assert!(!is_sorted(&reversed, Trend::Ascending), "{:?}", reversed);
-            assert!(!is_sorted(&reversed, Trend::Descending), "{:?}", reversed);
+            assert!(
+                !is_sorted(&reversed, Trend::Ascending),
+                "{:?}",
+                reversed
+            );
+            assert!(
+                !is_sorted(&reversed, Trend::Descending),
+                "{:?}",
+                reversed
+            );
+        }
+
+        for i in 1u32..1024 {
+            let mut a = (0..i).into_iter().collect::<Vec<_>>();
+            assert!(is_sorted(&a, Trend::Ascending));
+            a.reverse();
+            assert!(is_sorted(&a, Trend::Descending));
+            a.fill(1);
+            assert!(is_sorted(&a, Trend::Ascending));
+            assert!(is_sorted(&a, Trend::Descending));
         }
     }
 }
