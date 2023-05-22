@@ -1,3 +1,5 @@
+#![allow(non_camel_case_types)]
+
 ///
 ///   AVX2 impls
 #[cfg(all(
