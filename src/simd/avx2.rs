@@ -1,12 +1,15 @@
-#![allow(dead_code)]
-
-use crate::simd::{is_sorted_scalar, Trend};
-
+///
+///   AVX2 impls
 #[cfg(all(
+    feature = "use-avx2",
     target_feature = "avx2",
     any(target_arch = "x86_64", target_arch = "x86")
 ))]
-pub(crate) fn is_sorted_avx2<T: AsRef<[i32]>>(a: T, t: Trend) -> bool {
+pub fn is_sorted_avx2<T: num::Integer + crate::simd::SinglePrecision>(
+    a: &[T],
+    t: crate::simd::Trend,
+) -> bool {
+    use crate::simd::{is_sorted_scalar, Trend};
     #[cfg(target_arch = "x86")]
     use std::arch::x86::*;
     #[cfg(target_arch = "x86_64")]
@@ -39,11 +42,18 @@ pub(crate) fn is_sorted_avx2<T: AsRef<[i32]>>(a: T, t: Trend) -> bool {
     is_sorted_scalar(a, n, i, t)
 }
 
+///
+///   AVX2 impls
 #[cfg(all(
+    feature = "use-avx2",
     target_feature = "avx2",
     any(target_arch = "x86_64", target_arch = "x86")
 ))]
-pub(crate) fn is_sorted_avx2_unroll4<T: AsRef<[i32]>>(a: T, t: Trend) -> bool {
+pub fn is_sorted_avx2_unroll4<T: num::Integer + crate::simd::SinglePrecision>(
+    a: &[T],
+    t: crate::simd::Trend,
+) -> bool {
+    use crate::simd::{is_sorted_scalar, Trend};
     #[cfg(target_arch = "x86")]
     use std::arch::x86::*;
     #[cfg(target_arch = "x86_64")]
@@ -93,7 +103,6 @@ pub(crate) fn is_sorted_avx2_unroll4<T: AsRef<[i32]>>(a: T, t: Trend) -> bool {
 #[cfg(target_feature = "avx2")]
 #[cfg(test)]
 mod tests {
-    use crate::simd::Trend;
 
     #[cfg(all(
         target_feature = "avx2",
@@ -101,23 +110,36 @@ mod tests {
     ))]
     #[test]
     fn test_works() {
-        use crate::simd::avx2::{is_sorted_avx2, is_sorted_avx2_unroll4};
+        use crate::simd::avx2::*;
+        use crate::simd::Trend;
         let mut nums = vec![0, 1, 2, 3, 4, 5, 6, 7];
-        assert!(is_sorted_avx2(&nums, Trend::Ascending), "vector is ascending");
+        assert!(
+            is_sorted_avx2(&nums, Trend::Ascending),
+            "vector is ascending"
+        );
         assert!(
             !is_sorted_avx2(&nums, Trend::Descending),
             "vector is not descending"
         );
         nums.reverse();
-        assert!(is_sorted_avx2(&nums, Trend::Descending), "vector is descending");
+        assert!(
+            is_sorted_avx2(&nums, Trend::Descending),
+            "vector is descending"
+        );
         assert!(
             !is_sorted_avx2(&nums, Trend::Ascending),
             "vector is not ascending"
         );
 
         let nums = vec![1, 0, 3, 2, 4, 5, 6, 7];
-        assert!(!is_sorted_avx2(&nums, Trend::Ascending), "vector is not sorted");
-        assert!(!is_sorted_avx2(&nums, Trend::Descending), "vector is not sorted");
+        assert!(
+            !is_sorted_avx2(&nums, Trend::Ascending),
+            "vector is not sorted"
+        );
+        assert!(
+            !is_sorted_avx2(&nums, Trend::Descending),
+            "vector is not sorted"
+        );
         let mut nums = (0i32..64).into_iter().collect::<Vec<_>>();
         assert!(
             is_sorted_avx2_unroll4(&nums, Trend::Ascending),
@@ -131,8 +153,33 @@ mod tests {
         );
 
         let nums = vec![1i32; 8];
-        assert!(is_sorted_avx2(&nums, Trend::Ascending), "vector is ascending");
+        assert!(
+            is_sorted_avx2(&nums, Trend::Ascending),
+            "vector is ascending"
+        );
         let nums = vec![1, 2, 2, 2, 2, 2, 2, 3];
-        assert!(is_sorted_avx2(&nums, Trend::Ascending), "vector is ascending");
+        assert!(
+            is_sorted_avx2(&nums, Trend::Ascending),
+            "vector is ascending"
+        );
+
+        let mut nums = (0u32..8).into_iter().collect::<Vec<_>>();
+        assert!(is_sorted_avx2(&nums, Trend::Ascending));
+        nums.reverse();
+        assert!(is_sorted_avx2(&nums, Trend::Descending));
+        nums[6] = u32::MAX;
+        nums[7] = u32::MIN;
+        assert!(!is_sorted_avx2(&nums, Trend::Ascending));
+        assert!(!is_sorted_avx2(&nums, Trend::Descending));
+
+        let mut nums = (0u32..128).into_iter().collect::<Vec<_>>();
+        assert!(is_sorted_avx2_unroll4(&nums, Trend::Ascending));
+        nums.reverse();
+        assert!(is_sorted_avx2_unroll4(&nums, Trend::Descending));
+
+        nums[126] = u32::MAX;
+        nums[127] = u32::MIN;
+        assert!(!is_sorted_avx2_unroll4(&nums, Trend::Ascending));
+        assert!(!is_sorted_avx2_unroll4(&nums, Trend::Descending));
     }
 }
