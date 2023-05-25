@@ -2,6 +2,12 @@
 name = "sorted-rs"
 version = "0.1.0"
 edition = "2021"
+authors = ["0x29A <kwancr92@gmail.com>"]
+keywords = ["SIMD", "is_sorted", "sse", "avx2"]
+categories = ["algorithm"]
+license = "Apache-2.0/MIT"
+repository = "https://github.com/kwanCCC/sorted-rs"
+description = "another blazing fast algorithm through SIMDs which used to check the sequnce is sort or not"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
