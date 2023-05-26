@@ -1,3 +1,5 @@
+[![build](https://github.com/kwanCCC/sorted-rs/actions/workflows/rust.yml/badge.svg)](https://github.com/kwanCCC/sorted-rs/actions/workflows/rust.yml)
+
 ## Another algorithm base on SIMD which use to check slice is sorted or not
 
 It both support `SSE2` and `AVX2` and much faster than regular implementations.
