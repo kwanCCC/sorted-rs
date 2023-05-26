@@ -1,27 +1,78 @@
 #[macro_use]
 extern crate criterion;
+#[macro_use]
+extern crate lazy_static;
 
-use criterion::{black_box, Bencher, BenchmarkId, Criterion, Throughput};
+use std::collections::HashMap;
+
+use criterion::{Bencher, BenchmarkId, Criterion, Throughput};
+
 use sorted_rs::*;
 
-fn do_ascending_bench(b: &mut Bencher, &size: &usize) {
-    let nums = (0..size).into_iter().map(|u| u as i32).collect::<Vec<i32>>();
+lazy_static! {
+    static ref ASCENDING_MAP: HashMap<usize, Vec<i32>> = {
+        let mut m = HashMap::new();
+        for &size in &SIZES[..] {
+            m.insert(
+                size,
+                (0..size)
+                    .into_iter()
+                    .map(|u| u as i32)
+                    .collect::<Vec<i32>>(),
+            );
+        }
+        for &size in &LARGE_SIZES[..] {
+            m.insert(
+                size,
+                (0..size)
+                    .into_iter()
+                    .map(|u| u as i32)
+                    .collect::<Vec<i32>>(),
+            );
+        }
+        m
+    };
+    static ref DESCENDING_MAP: HashMap<usize, Vec<i32>> = {
+        let mut m = HashMap::new();
+        for &size in &SIZES[..] {
+            m.insert(
+                size,
+                (0..size)
+                    .into_iter()
+                    .rev()
+                    .map(|u| u as i32)
+                    .collect::<Vec<i32>>(),
+            );
+        }
+        for &size in &LARGE_SIZES[..] {
+            m.insert(
+                size,
+                (0..size)
+                    .into_iter()
+                    .rev()
+                    .map(|u| u as i32)
+                    .collect::<Vec<i32>>(),
+            );
+        }
+        m
+    };
+}
+
+fn do_ascending_bench(b: &mut Bencher, size: &usize) {
+    let nums = ASCENDING_MAP.get(size).unwrap();
     b.iter(|| {
-        is_sorted(&nums, Trend::Ascending);
-        black_box(&nums);
+        is_sorted(nums, Trend::Ascending);
     });
 }
 
-fn do_descending_bench(b: &mut Bencher, &size: &usize) {
-    let mut nums = (0..size).into_iter().map(|u| u as i32).collect::<Vec<i32>>();
-    nums.reverse();
+fn do_descending_bench(b: &mut Bencher, size: &usize) {
+    let nums = DESCENDING_MAP.get(size).unwrap();
     b.iter(|| {
-        is_sorted(&nums, Trend::Descending);
-        black_box(&nums);
+        is_sorted(nums, Trend::Descending);
     });
 }
 
-#[inline]
+#[inline(never)]
 fn is_sorted_scalar<T: AsRef<[i32]>>(a: T, trend: Trend) -> bool {
     let a = a.as_ref();
     let compare = match trend {
@@ -37,20 +88,17 @@ fn is_sorted_scalar<T: AsRef<[i32]>>(a: T, trend: Trend) -> bool {
     true
 }
 
-fn do_generic_ascending(b: &mut Bencher, &size: &usize) {
-    let nums = (0..size).into_iter().map(|u| u as i32).collect::<Vec<i32>>();
+fn do_generic_ascending(b: &mut Bencher, size: &usize) {
+    let nums = ASCENDING_MAP.get(size).unwrap();
     b.iter(|| {
-        is_sorted_scalar(&nums, Trend::Ascending);
-        black_box(&nums);
+        is_sorted_scalar(nums, Trend::Ascending);
     });
 }
 
-fn do_generic_descending(b: &mut Bencher, &size: &usize) {
-    let mut nums = (0..size).into_iter().map(|u| u as i32).collect::<Vec<i32>>();
-    nums.reverse();
+fn do_generic_descending(b: &mut Bencher, size: &usize) {
+    let nums = DESCENDING_MAP.get(size).unwrap();
     b.iter(|| {
-        is_sorted_scalar(&nums, Trend::Ascending);
-        black_box(&nums);
+        is_sorted_scalar(nums, Trend::Ascending);
     });
 }
 
@@ -61,7 +109,7 @@ fn sorted_benchmarks(c: &mut Criterion, label: &str, sizes: &[usize]) {
     let mut group = c.benchmark_group(label);
     group
         .warm_up_time(std::time::Duration::from_millis(500))
-        .measurement_time(std::time::Duration::from_secs(3));
+        .measurement_time(std::time::Duration::from_secs(10));
 
     for size in sizes {
         group

@@ -21,13 +21,13 @@ pub fn is_sorted<T: num::Integer + SinglePrecision>(a: &[T], t: Trend) -> bool {
     let n = a.len();
     #[cfg(feature = "use-sse")]
     {
-        if n <= WORD || (n > WORD && n < SSE_WORD) {
+        if n < SSE_WORD {
             return simd::is_sorted(a, t);
         }
     }
     #[cfg(feature = "use-avx2")]
     {
-        if n <= WORD || (n > WORD && n < AVX2_WORD) {
+        if n < AVX2_WORD {
             return simd::is_sorted(&a, t);
         }
     }
@@ -73,16 +73,8 @@ mod tests {
                 reversed.extend(cur_data.iter().rev());
             }
 
-            assert!(
-                !is_sorted(&reversed, Trend::Ascending),
-                "{:?}",
-                reversed
-            );
-            assert!(
-                !is_sorted(&reversed, Trend::Descending),
-                "{:?}",
-                reversed
-            );
+            assert!(!is_sorted(&reversed, Trend::Ascending), "{:?}", reversed);
+            assert!(!is_sorted(&reversed, Trend::Descending), "{:?}", reversed);
         }
 
         for i in 1u32..1024 {
